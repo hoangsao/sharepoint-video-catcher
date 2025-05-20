@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Sharepoint Video Catcher - Test Guide</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      color: #333;
+    }
+    h1, h2, h3 {
+      color: #0078d4;
+    }
+    .step {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #f9f9f9;
+      border-left: 4px solid #0078d4;
+    }
+    code {
+      background-color: #f0f0f0;
+      padding: 2px 5px;
+      border-radius: 3px;
+      font-family: Consolas, monospace;
+    }
+    .note {
+      background-color: #fffbea;
+      padding: 10px;
+      border-left: 4px solid #f0c419;
+      margin: 15px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Sharepoint Video Catcher - Test Guide</h1>
+  
+  <p>This document will help you test the Sharepoint Video Catcher extension to ensure it's working correctly.</p>
+  
+  <h2>Test Environment Setup</h2>
+  
+  <div class="step">
+    <h3>Step 1: Load the Extension</h3>
+    <p>Make sure the extension is loaded in your browser:</p>
+    <ul>
+      <li>Open Chrome or Edge browser</li>
+      <li>Go to the extensions page (chrome://extensions/ or edge://extensions/)</li>
+      <li>Enable "Developer mode"</li>
+      <li>Click "Load unpacked" and select the extension folder</li>
+      <li>Verify that the Sharepoint Video Catcher extension appears in your extensions list</li>
+    </ul>
+  </div>
+  
+  <div class="step">
+    <h3>Step 2: Visit a Sharepoint Site</h3>
+    <p>Visit a Sharepoint site that contains videos:</p>
+    <ul>
+      <li>Log in to your organization's Sharepoint</li>
+      <li>Navigate to a page that contains video content</li>
+      <li>Play a video to trigger the network requests</li>
+    </ul>
+    <div class="note">
+      <strong>Note:</strong> For testing, you can use any Sharepoint site with embedded videos. The extension should detect video manifest URLs that contain the string "videomanifest".
+    </div>
+  </div>
+  
+  <h2>Testing the Extension</h2>
+  
+  <div class="step">
+    <h3>Step 3: Check for Video Detection</h3>
+    <p>After playing a video on a Sharepoint page:</p>
+    <ul>
+      <li>Click on the Sharepoint Video Catcher extension icon in the browser toolbar</li>
+      <li>The popup should display the detected video with its title</li>
+      <li>If no videos are detected, check the browser console for any error messages</li>
+    </ul>
+  </div>
+  
+  <div class="step">
+    <h3>Step 4: Test the Copy Functions</h3>
+    <p>In the extension popup:</p>
+    <ul>
+      <li>Click the "Copy URL" button and verify that the URL is copied to your clipboard</li>
+      <li>Click the "Copy Command" button and verify that the ffmpeg command is copied to your clipboard</li>
+      <li>Both buttons should show "Copied!" text when clicked</li>
+    </ul>
+  </div>
+  
+  <div class="step">
+    <h3>Step 5: Verify the ffmpeg Command</h3>
+    <p>Test the generated ffmpeg command:</p>
+    <ul>
+      <li>If you have ffmpeg installed, paste the copied command into a terminal/command prompt</li>
+      <li>Verify that the download starts and completes successfully</li>
+      <li>Check that the video file has been saved with the correct name</li>
+    </ul>
+    <div class="note">
+      <strong>Important:</strong> The ffmpeg command format should be: <code>ffmpeg -i "URL_WITHOUT_ENABLECDN" -codec copy "VIDEO_TITLE.mp4"</code>
+    </div>
+  </div>
+  
+  <h2>Troubleshooting</h2>
+  
+  <p>If the extension doesn't detect videos:</p>
+  <ul>
+    <li>Make sure you're on a Sharepoint site (URL contains sharepoint.com)</li>
+    <li>Check that the video is actually playing (not just displayed as a thumbnail)</li>
+    <li>Open the browser's Developer Tools (F12) and check the Console for any error messages</li>
+    <li>In the Network tab, filter for "videomanifest" to verify if such requests are being made</li>
+  </ul>
+  
+  <hr>
+  
+  <p>For more information, refer to the <a href="README.md">README.md</a> file.</p>
+</body>
+</html>

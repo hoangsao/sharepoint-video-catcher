@@ -1,0 +1,96 @@
+/* Options page styles for Sharepoint Video Catcher */
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  line-height: 1.6;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  color: #333;
+  background-color: #f8f8f8;
+}
+
+h1 {
+  color: #0078d4;
+  border-bottom: 1px solid #e1e1e1;
+  padding-bottom: 10px;
+  margin-top: 0;
+}
+
+.option-group {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #fff;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.option-group h2 {
+  margin-top: 0;
+  font-size: 18px;
+  color: #0078d4;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+input[type="text"], input[type="number"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.checkbox-label {
+  font-weight: normal;
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-label input {
+  margin-right: 10px;
+}
+
+button {
+  background-color: #0078d4;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #106ebe;
+}
+
+button:active {
+  background-color: #005a9e;
+}
+
+#status {
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.success {
+  background-color: #dff6dd;
+  color: #107c10;
+}
+
+.hint {
+  font-size: 12px;
+  color: #666;
+  margin-top: -10px;
+  margin-bottom: 15px;
+}

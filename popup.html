@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Sharepoint Video Catcher</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="icons/icon32.png" />
+      <h1>Sharepoint Video Catcher</h1>
+      <button id="clear-all-button" class="clear-all-button">Clear All</button>
+    </div>
+    <div id="no-videos" class="message">
+      <p>No videos detected yet. Please follow these steps:</p>
+      <ol style="text-align: left; padding-left: 20px;">
+        <li>Make sure you're on a Sharepoint site</li>
+        <li>Navigate to a page with a video</li>
+        <li>Play the video for several seconds</li>
+        <li>Try seeking/scrubbing through the video</li>
+        <li>Refresh this popup</li>
+      </ol>
+    </div>
+    <div id="video-list" class="scrollable-list"></div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
