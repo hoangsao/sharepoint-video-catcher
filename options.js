@@ -8,6 +8,8 @@ const defaultOptions = {
   ],
   removeParams: ["enableCdn"],
   videoKeywords: ["videomanifest"],
+  transcriptKeywords: ["select=media/transcripts", "select=media%2Ftranscripts"],
+  subrequestParams: ["subRequest=true", "isCustomized=true"],
   fileExtension: '.mp4',
   ffmpegTemplate: 'ffmpeg -i "{url}" -codec copy "{filename}"',
   maxItems: 20,
@@ -20,6 +22,8 @@ function loadOptions() {
     document.getElementById('domains').value = options.domains.join('\n');
     document.getElementById('removeParams').value = options.removeParams.join('\n');
     document.getElementById('videoKeywords').value = options.videoKeywords.join('\n');
+    document.getElementById('transcriptKeywords').value = options.transcriptKeywords.join('\n');
+    document.getElementById('subrequestParams').value = options.subrequestParams.join('\n');
     document.getElementById('fileExtension').value = options.fileExtension;
     document.getElementById('ffmpegTemplate').value = options.ffmpegTemplate;
     document.getElementById('maxItems').value = options.maxItems;
@@ -41,10 +45,20 @@ function saveOptions() {
     .map(line => line.trim())
     .filter(line => line.length > 0);
   
+  const transcriptKeywords = document.getElementById('transcriptKeywords').value.split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0);
+  
+  const subrequestParams = document.getElementById('subrequestParams').value.split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0);
+  
   const options = {
     domains: domains,
     removeParams: removeParams,
     videoKeywords: videoKeywords,
+    transcriptKeywords: transcriptKeywords,
+    subrequestParams: subrequestParams,
     fileExtension: document.getElementById('fileExtension').value,
     ffmpegTemplate: document.getElementById('ffmpegTemplate').value,
     maxItems: parseInt(document.getElementById('maxItems').value, 10),

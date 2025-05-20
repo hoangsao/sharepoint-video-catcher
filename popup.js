@@ -89,6 +89,64 @@ function displayVideoManifests(manifests) {
       
       videoItem.appendChild(commandContainer);
       
+      // Add subtitle section if available
+      if (video.subtitleUrl) {
+        const subtitleContainer = document.createElement('div');
+        subtitleContainer.className = 'command-container subtitle-container';
+        
+        const subtitleText = document.createElement('div');
+        subtitleText.className = 'command-text';
+        subtitleText.title = video.subtitleUrl;
+        subtitleText.textContent = video.subtitleUrl;
+        subtitleContainer.appendChild(subtitleText);
+          
+        const copySubtitleButton = document.createElement('button');
+        copySubtitleButton.textContent = 'Copy VTT URL';
+        copySubtitleButton.onclick = function(event) {
+          copyToClipboard(video.subtitleUrl, event);
+        };
+        subtitleContainer.appendChild(copySubtitleButton);
+        
+        // Add download button
+        const downloadSubtitleButton = document.createElement('button');
+        downloadSubtitleButton.textContent = 'Download';
+        downloadSubtitleButton.onclick = function() {
+          // Create and click a temporary download link
+          const a = document.createElement('a');
+          a.href = video.subtitleUrl;
+          const fileName = `${video.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${video.subtitleLanguage || 'en'}.vtt`;
+          a.download = fileName;
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        };
+        subtitleContainer.appendChild(downloadSubtitleButton);
+        
+        videoItem.appendChild(subtitleContainer);
+      }
+
+      // Add transcript section if available
+      if (video.transcriptText) {
+        const transcriptContainer = document.createElement('div');
+        transcriptContainer.className = 'command-container transcript-container';
+
+        const transcriptText = document.createElement('div');
+        transcriptText.className = 'command-text';
+        transcriptText.title = video.transcriptJsonUrl;
+        transcriptText.textContent = video.transcriptJsonUrl;
+        transcriptContainer.appendChild(transcriptText);
+
+        const copyTranscriptButton = document.createElement('button');
+        copyTranscriptButton.textContent = 'Copy Transcript Data';
+        copyTranscriptButton.onclick = function (event) {
+          copyToClipboard(video.transcriptText, event);
+        };
+        transcriptContainer.appendChild(copyTranscriptButton);
+
+        videoItem.appendChild(transcriptContainer);
+      }
+
       // Timestamp
       const timestampElement = document.createElement('div');
       timestampElement.className = 'timestamp';

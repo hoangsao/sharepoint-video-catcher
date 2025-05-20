@@ -41,11 +41,19 @@
       color: #666;
       margin-top: 5px;
     }
+    
+    .section-header {
+      border-bottom: 1px solid #ddd;
+      margin-top: 25px;
+      padding-bottom: 5px;
+      color: #0078d4;
+    }
   </style>
 </head>
 <body>
   <h1>Sharepoint Video Catcher Options</h1>
 
+  <h3 class="section-header">Video Detection Settings</h3>
   <div class="form-group">
     <label for="domains">Domains to Monitor:</label>
     <textarea id="domains" placeholder="One domain pattern per line, e.g. *://*.sharepoint.com/*"></textarea>
@@ -73,6 +81,21 @@
     <label for="ffmpegTemplate">FFMPEG Command Template:</label>
     <textarea id="ffmpegTemplate" placeholder='ffmpeg -i "{url}" -codec copy "{filename}"'></textarea>
     <div class="hint">Use {url} and {filename} as placeholders.</div>
+  </div>
+
+  <h3 class="section-header">Transcript Detection Settings</h3>
+  <div class="form-group">
+    <label for="transcriptKeywords">Transcript URL Detection Keywords:</label>
+    <textarea id="transcriptKeywords" placeholder="One keyword per line, e.g. media/transcripts"></textarea>
+    <div class="hint">Enter keywords used to identify transcript URLs.</div>
+  </div>
+
+  <h3 class="section-header">Common Settings</h3>
+  
+  <div class="form-group">
+    <label for="subrequestParams">Subrequest Parameters:</label>
+    <textarea id="subrequestParams" placeholder="One parameter per line, e.g. subRequest=true"></textarea>
+    <div class="hint">Parameters to add when fetching Subrequest data.</div>
   </div>
 
   <div class="form-group">
