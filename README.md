@@ -68,18 +68,14 @@ You can customize several aspects of the extension via the options page:
 
 ## Changelog
 
-### Version 1.0.3
-- Fixed notification image loading issue
-- Added better duplicate detection using unique ID extraction from docid parameter
-- Improved stability and fixed various bugs
-
-### Version 1.0.2
+### Version 1.0.0
+- Initial public release
 - Enhanced video detection patterns
 - Improved user interface with debug information
 - Fixed URL pattern issues
-
-### Version 1.0.1
-- Initial public release
+- Fixed notification image loading issue
+- Added better duplicate detection using unique ID extraction from docid parameter
+- Improved stability and fixed various bugs
 
 ## Usage Example
 
