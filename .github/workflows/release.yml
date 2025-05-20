@@ -1,0 +1,53 @@
+name: Build and Publish Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on push of tags starting with 'v'
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest # Use Windows runner due to PowerShell script
+    permissions:
+      contents: write # Required for creating releases
+    
+    steps:
+      # Check out the repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Set up Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Run the build script to generate the extension ZIP
+      - name: Build Extension
+        run: |
+          .\build.ps1 -Version "${{ github.ref_name }}"
+        shell: pwsh
+        
+      # Make sure the artifact exists
+      - name: Check artifact exists
+        run: |
+          if (-Not (Test-Path -Path "./dist/sharepoint-video-catcher-${{ github.ref_name }}.zip")) {
+            Write-Error "Build artifact not found!"
+            exit 1
+          }
+        shell: pwsh
+
+      # Create a GitHub release and upload assets in one step
+      - name: Create Release and Upload Asset
+        uses: softprops/action-gh-release@v1
+        with:
+          name: SharePoint Video Catcher ${{ github.ref_name }}
+          body: |
+            **SharePoint Video Catcher ${{ github.ref_name }}**  
+            - Initial public release (see README for full changelog).  
+            - Built extension ZIP available below.  
+            Happy video catching!
+          draft: false
+          prerelease: false
+          files: |
+            ./dist/sharepoint-video-catcher-${{ github.ref_name }}.zip
