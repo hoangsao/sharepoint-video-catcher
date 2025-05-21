@@ -10,6 +10,9 @@ A browser extension for Microsoft Edge or Chrome that helps detect and download 
 - Shows video title, URL, and download command
 - Allows one-click copying of URLs and ffmpeg commands
 - Stores the last 20 detected videos
+- Detects and extracts video subtitles (VTT files)
+- Captures video transcripts from SharePoint
+- Allows downloading and copying subtitle/transcript content
 
 ## How to use
 
@@ -18,6 +21,8 @@ A browser extension for Microsoft Edge or Chrome that helps detect and download 
 3. Play videos on the site to trigger manifest URL detection
 4. Click the extension icon to view detected videos
 5. Copy the ffmpeg command and paste it into your terminal to download the video
+6. For subtitles: Use the "Copy VTT URL" or "Download" button to access the subtitles
+7. For transcripts: Click "Copy Transcript Data" to copy the full transcript text
 
 ## Requirements
 
@@ -58,6 +63,8 @@ You can customize several aspects of the extension via the options page:
    - Default file extension
    - Whether to show notifications when videos are detected
    - Custom ffmpeg command template
+   - Video and transcript detection keywords
+   - Subrequest parameters for API calls
 
 ## Usage Notes
 
@@ -65,6 +72,8 @@ You can customize several aspects of the extension via the options page:
 - Video file names are generated from page titles
 - If a page title doesn't end with .mp4, the extension will add it automatically
 - The extension prevents duplicate videos by extracting a unique identifier from the URL
+- Subtitle and transcript detection works automatically when playing videos with captions
+- Transcripts are organized by speaker when available
 
 ## Changelog
 
@@ -76,6 +85,10 @@ You can customize several aspects of the extension via the options page:
 - Fixed notification image loading issue
 - Added better duplicate detection using unique ID extraction from docid parameter
 - Improved stability and fixed various bugs
+- Added subtitle (VTT) detection and download capability
+- Added transcript text capture from SharePoint videos
+- Improved transcript formatting with speaker identification
+- Added new configuration options for transcript detection
 
 ## Usage Example
 
@@ -92,6 +105,8 @@ Here's a typical workflow for using the extension:
    ffmpeg -i "https://company.sharepoint.com/sites/videos/_layouts/15/Videomanifest.aspx?id=01ABCDEF-1234-5678-ABCD-123456789ABC" -codec copy "Meeting Recording.mp4"
    ```
 8. The video will be downloaded to your current directory
+9.To get subtitles: Click "Download" under the subtitle section to save the VTT file
+10. For transcripts: Click "Copy Transcript Data" to get the formatted transcript text
 
 ## License
 
