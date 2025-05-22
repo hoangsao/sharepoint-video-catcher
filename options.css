@@ -47,7 +47,19 @@ label {
   font-weight: bold;
 }
 
-input[type="text"], input[type="number"] {
+textarea {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+  margin-bottom: 15px;
+  font-size: 14px;
+  resize: vertical; /* Only allow vertical resizing */
+}
+
+input[type="text"], input[type="number"], select {
   width: 100%;
   padding: 8px;
   border: 1px solid #ddd;
@@ -86,6 +98,17 @@ button:active {
   background-color: #005a9e;
 }
 
+.test-button {
+  margin-top: 10px;
+  background-color: #5c2d91;
+  font-size: 13px;
+  padding: 5px 10px;
+}
+
+.test-button:hover {
+  background-color: #7c2ac3;
+}
+
 #status {
   margin-top: 15px;
   padding: 10px;
@@ -98,9 +121,18 @@ button:active {
   color: #107c10;
 }
 
-.hint {
-  font-size: 12px;
-  color: #666;
-  margin-top: -10px;
-  margin-bottom: 15px;
+#logLevelContainer {
+  margin-top: 15px;
+  border-left: 4px solid #0078d4;
+  padding-left: 10px;
+  transition: opacity 0.3s ease;
+}
+
+#logLevelContainer.disabled {
+  opacity: 0.5;
+}
+
+select#logLevel {
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
 }

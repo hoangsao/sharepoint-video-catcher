@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title>Sharepoint Video Catcher Options</title>
   <link rel="stylesheet" href="options.css">
 </head>
+
 <body>
   <h1>Sharepoint Video Catcher Options</h1>
 
@@ -44,7 +46,7 @@
   </div>
 
   <h3 class="section-header">Common Settings</h3>
-  
+
   <div class="option-group">
     <label for="subrequestParams">Subrequest Parameters:</label>
     <textarea id="subrequestParams" placeholder="One parameter per line, e.g. subRequest=true"></textarea>
@@ -55,17 +57,41 @@
     <input type="number" id="maxItems" min="1" max="100">
     <div class="hint">The maximum number of videos to keep in history.</div>
   </div>
-
   <div class="option-group">
     <label class="checkbox-label">
       <input type="checkbox" id="notifyOnDetection">
       Show notification when video is detected
     </label>
   </div>
-
+  <div class="option-group">
+    <label class="checkbox-label">
+      <input type="checkbox" id="debugMode">
+      Enable debug logging (developer feature)
+    </label>
+    <div class="hint">When enabled, detailed logs will be written to the browser console.</div>
+  </div>
+  <div class="option-group" id="logLevelContainer">
+    <label for="logLevel">Log Level:</label>
+    <select id="logLevel">
+      <option value="0">None (No logging)</option>
+      <option value="1">Error (Only errors)</option>
+      <option value="2">Warning (Errors and warnings)</option>
+      <option value="3">Info (Errors, warnings, and info)</option>
+      <option value="4">Debug (All logs)</option>
+    </select>
+    <div class="hint">
+      Controls what types of logs are shown when debug mode is enabled. Higher levels include all lower
+      level logs.
+    </div>
+    <button id="test-selected-level" class="test-button">Test Selected Level</button>
+    <button id="test-logger" class="test-button">Test Logger</button>
+  </div>
   <button id="save">Save Options</button>
   <div id="status"></div>
 
+  <script src="logger.js"></script>
+  <script src="logger-test.js"></script>
   <script src="options.js"></script>
 </body>
+
 </html>

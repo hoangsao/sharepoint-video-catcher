@@ -59,11 +59,34 @@ This guide will help you set up and start using the Sharepoint Video Catcher ext
 ## Customizing Settings
 
 1. Right-click the extension icon and select "Options"
-2. You can customize:
-   - Maximum number of videos to store
+2. You can customize:   - Maximum number of videos to store
    - Default file extension
    - Notification preferences
    - ffmpeg command template
+   - Debug logging settings
+
+## Debug Logging
+
+The extension includes an enhanced logging system that can help troubleshoot issues:
+
+1. Right-click the extension icon and select "Options"
+2. Scroll down to the "Enable debug logging" checkbox and check it
+3. Select your preferred log level:
+   - None: Disables all logging
+   - Error: Shows only critical errors
+   - Warning: Shows errors and warnings
+   - Info: Shows errors, warnings, and general information
+   - Debug: Shows all messages, including detailed debugging information
+
+4. To view logs:
+   - Open your browser's Developer Tools (F12 or Ctrl+Shift+I)
+   - Go to the "Console" tab
+   - Filtered logs will appear with the [SharepointVideoCatcher] prefix
+
+5. For advanced testing, you can use the logger-test.js script:
+   - With debug mode enabled, open the browser console
+   - Type `loggerTest()` and press Enter
+   - This will demonstrate all log levels and formatting
 
 ## Troubleshooting
 

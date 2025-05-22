@@ -11,6 +11,24 @@
  * @license MIT
  */
 
+// Import the logger first
+try {
+  importScripts('logger.js');
+} catch (e) {
+  console.error('Failed to load logger.js:', e);
+}
+
+// Create a background-specific logger instance
+const bgLogger = new Logger('Background');
+
+// Import logger test functions
+try {
+  importScripts('logger-test.js');
+  bgLogger.debug('Logger test script loaded');
+} catch (e) {
+  bgLogger.error('Failed to load logger test script:', e);
+}
+
 /**
  * Extracts a specific token from a URL path based on the provided identifier.
  * For example, extracting the item ID from a path like "/items/123456".
@@ -19,8 +37,7 @@
  * @param {string} findIdToken - The identifier to search for in the URL path (default: 'items')
  * @returns {string|null} - The extracted token or null if not found
  */
-function extractUrlPathToken (url, findIdToken = 'items') {
-  try {
+function extractUrlPathToken (url, findIdToken = 'items') {  try {
     const urlObj = new URL(url);
     const regexPattern = `\\/${findIdToken}\\/([^\\/]+)`;
     const regex = new RegExp(regexPattern);
@@ -29,7 +46,7 @@ function extractUrlPathToken (url, findIdToken = 'items') {
       return match[1];
     }
   } catch (e) {
-    console.error('Error extracting URL path token:', e);
+    bgLogger.error('Error extracting URL path token:', e);
   }
   return null; // Return null if no match found
 }
@@ -179,7 +196,7 @@ async function createOrUpdateVideoManifest ({ uniqueId, ...item } = {}, options)
 
   // Store the updated manifests in local storage
   chrome.storage.local.set({ videoManifests: manifests });
-  console.log('Video manifest inserted/updated', uniqueId);
+  bgLogger.info('Video manifest inserted/updated', uniqueId);
 
   return manifests;
 }
@@ -245,13 +262,13 @@ async function initializeListeners () {
   chrome.webRequest.onBeforeRequest.addListener(function (details) {
     // Check if URL contains any of the video keywords
     if (matchesVideoKeywords(details.url, options.videoKeywords)) {
-      console.log('Potential video URL detected:', details.url);
+      bgLogger.debug('Potential video URL detected:', details.url);
     }
 
     // Check if URL contains any of the transcript keywords
     if (matchesAnyKeywords(details.url, options.transcriptKeywords) &&
       !matchesAnyKeywords(details.url, options.subrequestParams)) {
-      console.log('Potential transcript URL detected:', details.url);
+      bgLogger.debug('Potential transcript URL detected:', details.url);
     }
   }, { urls: options.domains }, []);
   /**
@@ -272,7 +289,7 @@ async function initializeListeners () {
       if (matchesAnyKeywords(urlWithoutParams, options.videoKeywords) ||
         matchesAnyKeywords(details.url, options.videoKeywords)) {
 
-        console.log('Video manifest detected:', details.url);
+        bgLogger.info('Video manifest detected:', details.url);
 
         // Remove unwanted parameters
         let modifiedUrl = details.url;
@@ -283,7 +300,7 @@ async function initializeListeners () {
           });
         });
 
-        console.log('Modified URL:', modifiedUrl);
+        bgLogger.debug('Modified URL:', modifiedUrl);
 
         try {
           // Get active tab and document title for filename
@@ -305,7 +322,7 @@ async function initializeListeners () {
             .replace('{url}', modifiedUrl)
             .replace('{filename}', fileName);
 
-          console.log('FFMPEG Command:', ffmpegCommand);
+          bgLogger.info('FFMPEG Command:', ffmpegCommand);
 
           // Store the video information
           const videoInfo = {
@@ -334,7 +351,7 @@ async function initializeListeners () {
         }
       }      // Check if URL matches any of the transcript keywords
       if (matchesAnyKeywords(details.url, options.transcriptKeywords)) {
-        console.log('Potential subtitle request detected:', details.url);
+        bgLogger.debug('Potential subtitle request detected:', details.url);
 
         try {
           const transcriptJson = await fetchApiData(details.url, options.subrequestParams);
@@ -347,7 +364,7 @@ async function initializeListeners () {
               t.transcriptType === "subtitle" && t.temporaryDownloadUrl);
 
             if (transcript && transcript.temporaryDownloadUrl) {
-              console.log('Found VTT URL:', transcript.temporaryDownloadUrl);
+              bgLogger.info('Found VTT URL:', transcript.temporaryDownloadUrl);
 
               // Store the subtitle info with the video ID
               const subtitleInfo = {
@@ -360,7 +377,7 @@ async function initializeListeners () {
               await createOrUpdateVideoManifest(subtitleInfo, {
                 maxItems: options.maxItems
               });
-              console.log('Added subtitle URL to existing video');
+              bgLogger.info('Added subtitle URL to existing video');
             }
           }
         } catch (error) {
@@ -370,13 +387,13 @@ async function initializeListeners () {
 
       // Check if URL matches any of the transcript json keywords
       if (containsAllRequiredSubstrings(details.url, ['transcripts', 'streamContent'])) {
-        console.log('Potential transcript JSON request detected:', details.url);
+        bgLogger.debug('Potential transcript JSON request detected:', details.url);
         
         try {
           const transcriptJson = await fetchApiData(details.url, options.subrequestParams);
           
           if (!transcriptJson || !transcriptJson.entries || !Array.isArray(transcriptJson.entries)) {
-            console.log('No valid transcript entries found in response');
+            bgLogger.warn('No valid transcript entries found in response');
             return;
           }
           
@@ -405,7 +422,7 @@ async function initializeListeners () {
           await createOrUpdateVideoManifest(transcriptInfo, {
             maxItems: options.maxItems
           });
-          console.log('Added transcript JSON to existing video');
+          bgLogger.info('Added transcript JSON to existing video');
         } catch (error) {
           console.error('Error fetching transcript JSON data:', error);
         }
@@ -490,9 +507,8 @@ function containsAnySubrequestParams (url, params) {
  * Extension initialization on install or update.
  * Sets up event listeners, initializes storage, and shows a welcome notification.
  */
-chrome.runtime.onInstalled.addListener(async function () {
-  console.log('Sharepoint Video Catcher extension installed/updated');
-  console.log('Extension is monitoring URLs matching: *://*.sharepoint.com/* and *://*.svc.ms/*');
+chrome.runtime.onInstalled.addListener(async function () {  bgLogger.info('Sharepoint Video Catcher extension installed/updated');
+  bgLogger.info('Extension is monitoring URLs matching: *://*.sharepoint.com/* and *://*.svc.ms/*');
 
   try {
     // Initialize listeners with current options
@@ -503,7 +519,7 @@ chrome.runtime.onInstalled.addListener(async function () {
     if (!result.videoManifests) {
       await chrome.storage.local.set({ videoManifests: [] });
     } else {
-      console.log('Found existing video manifests:', result.videoManifests.length);
+      bgLogger.info('Found existing video manifests:', result.videoManifests.length);
     }
 
     // Initialize sync storage with default options if needed
@@ -542,7 +558,7 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
       changes.removeParams ||
       changes.transcriptKeywords ||
       changes.subrequestParams)) {
-    console.log('Options changed, reloading listeners');
+    bgLogger.info('Options changed, reloading listeners');
 
     try {
       // Remove existing listeners (if needed - webRequest API doesn't actually

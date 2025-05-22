@@ -24,6 +24,22 @@ A browser extension for Microsoft Edge or Chrome that helps detect and download 
 6. For subtitles: Use the "Copy VTT URL" or "Download" button to access the subtitles
 7. For transcripts: Click "Copy Transcript Data" to copy the full transcript text
 
+## Debug Logging
+
+The extension includes an enhanced logging system that can be configured in the options:
+
+1. Open the extension options page
+2. Check "Enable debug logging" to turn on logging
+3. Select a log level:
+   - None: No logging output
+   - Error: Only error messages
+   - Warning: Errors and warnings
+   - Info: Errors, warnings, and informational messages
+   - Debug: All log messages, including detailed debug information
+
+Logging is automatically disabled in production environments for optimal performance.
+Developers can enable it for troubleshooting issues or understanding extension behavior.
+
 ## Requirements
 
 - For downloading: ffmpeg must be installed on your system
@@ -123,3 +139,9 @@ Here's a typical workflow for using the extension:
 ## License
 
 MIT
+
+## Documentation
+
+- [Getting Started Guide](GETTING-STARTED.md) - Installation and basic usage
+- [Logger Documentation](LOGGER.md) - Using the enhanced logging system
+- [Contributing Guide](CONTRIBUTING.md) - How to contribute to the project

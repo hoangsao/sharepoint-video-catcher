@@ -50,7 +50,10 @@ $filesToInclude = @(
     "options.css",
     "options.html",
     "options.js",
+    "logger.js",
+    "logger-test.js",
     "README.md",
+    "LOGGER.md",
     "icons/*"
 )
 

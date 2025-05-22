@@ -10,6 +10,9 @@
  * @license MIT
  */
 
+// Create a popup-specific logger instance
+const popupLogger = new Logger('Popup');
+
 /**
  * Formats a timestamp into a human-readable date and time string.
  * 
@@ -27,18 +30,16 @@ function formatTimestamp(timestamp) {
  * @param {string} text - The text to copy to the clipboard
  * @param {Event} event - The click event from the button that triggered the copy
  */
-function copyToClipboard(text, event) {
-  if (!text || typeof text !== 'string') {
-    console.error('Invalid text provided for clipboard copy');
+function copyToClipboard(text, event) {  if (!text || typeof text !== 'string') {
+    popupLogger.error('Invalid text provided for clipboard copy');
     showCopyError(event.target, 'Invalid content');
     return;
   }
   
   navigator.clipboard.writeText(text).then(() => {
     // Visual feedback that the copy was successful
-    showCopySuccess(event.target);
-  }).catch(err => {
-    console.error('Failed to copy text: ', err);
+    showCopySuccess(event.target);  }).catch(err => {
+    popupLogger.error('Failed to copy text: ', err);
     showCopyError(event.target, 'Copy failed');
   });
 }
@@ -187,9 +188,8 @@ function displayVideoManifests(manifests) {
             a.style.display = 'none';
             document.body.appendChild(a);
             a.click();
-            document.body.removeChild(a);
-          } catch (error) {
-            console.error('Error downloading subtitle:', error);
+            document.body.removeChild(a);          } catch (error) {
+            popupLogger.error('Error downloading subtitle:', error);
             alert('Failed to download subtitle. Please try copying the URL instead.');
           }
         };
@@ -250,6 +250,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
       }
     };
+      // No logger test needed in popup
     
     // Initially hide the Clear All button (will show it only if videos exist)
     clearAllButton.classList.add('hidden');
@@ -267,9 +268,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     // Display the video manifests
-    displayVideoManifests(videoManifests);
-  } catch (error) {
-    console.error('Error initializing popup:', error);
+    displayVideoManifests(videoManifests);  } catch (error) {
+    popupLogger.error('Error initializing popup:', error);
     displayError('An error occurred while loading the video list');
   }
 });

@@ -15,15 +15,16 @@ const defaultOptions = {
   domains: [
     "*://*.sharepoint.com/*", 
     "*://*.svc.ms/*"
-  ],
-  removeParams: ["enableCdn"],
+  ],  removeParams: ["enableCdn"],
   videoKeywords: ["videomanifest"],
-  transcriptKeywords: ["select=media/transcripts", "select=media%2Ftranscripts"],
+  transcriptKeywords: ["select=media/transcripts", "select=media%2Ftranscripts"],  
   subrequestParams: ["subRequest=true", "isCustomized=true"],
   fileExtension: '.mp4',
   ffmpegTemplate: 'ffmpeg -i "{url}" -codec copy "{filename}"',
   maxItems: 20,
-  notifyOnDetection: false
+  notifyOnDetection: false,
+  debugMode: false,
+  logLevel: 3 // INFO level by default (corresponds to LogLevel.INFO)
 };
 
 /**
@@ -36,11 +37,23 @@ function loadOptions() {
     document.getElementById('removeParams').value = options.removeParams.join('\n');
     document.getElementById('videoKeywords').value = options.videoKeywords.join('\n');
     document.getElementById('transcriptKeywords').value = options.transcriptKeywords.join('\n');
-    document.getElementById('subrequestParams').value = options.subrequestParams.join('\n');
+    document.getElementById('subrequestParams').value = options.subrequestParams.join('\n');    
     document.getElementById('fileExtension').value = options.fileExtension;
     document.getElementById('ffmpegTemplate').value = options.ffmpegTemplate;
     document.getElementById('maxItems').value = options.maxItems;
     document.getElementById('notifyOnDetection').checked = options.notifyOnDetection;
+    document.getElementById('debugMode').checked = options.debugMode;
+      // Set log level
+    const logLevelSelect = document.getElementById('logLevel');
+    if (logLevelSelect) {
+      logLevelSelect.value = options.logLevel;
+    }
+    
+    // Set log level container visibility based on debug mode
+    const logLevelContainer = document.getElementById('logLevelContainer');
+    if (logLevelContainer) {
+      logLevelContainer.style.display = options.debugMode ? 'block' : 'none';
+    }
   });
 }
 
@@ -67,17 +80,17 @@ function saveOptions() {
   
   const subrequestParams = document.getElementById('subrequestParams').value.split('\n')
     .map(line => line.trim())
-    .filter(line => line.length > 0);
-    const options = {
+    .filter(line => line.length > 0);    const options = {
     domains: domains,
     removeParams: removeParams,
     videoKeywords: videoKeywords,
     transcriptKeywords: transcriptKeywords,
-    subrequestParams: subrequestParams,
-    fileExtension: document.getElementById('fileExtension').value || defaultOptions.fileExtension,
+    subrequestParams: subrequestParams,    fileExtension: document.getElementById('fileExtension').value || defaultOptions.fileExtension,
     ffmpegTemplate: document.getElementById('ffmpegTemplate').value || defaultOptions.ffmpegTemplate,
     maxItems: parseInt(document.getElementById('maxItems').value, 10) || defaultOptions.maxItems,
-    notifyOnDetection: document.getElementById('notifyOnDetection').checked
+    notifyOnDetection: document.getElementById('notifyOnDetection').checked,
+    debugMode: document.getElementById('debugMode').checked,
+    logLevel: parseInt(document.getElementById('logLevel').value, 10) || defaultOptions.logLevel
   };
 
   // Validate options
@@ -133,6 +146,11 @@ function validateOptions(options) {
     return { valid: false, message: 'FFMPEG template cannot be empty' };
   }
   
+  // Validate log level
+  if (options.logLevel === undefined || options.logLevel < 0 || options.logLevel > 4) {
+    options.logLevel = 3; // Default to INFO level
+  }
+  
   return { valid: true, message: '' };
 }
 
@@ -172,4 +190,57 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+
+  // Toggle log level visibility based on debug mode
+  const debugModeCheckbox = document.getElementById('debugMode');
+  const logLevelContainer = document.getElementById('logLevelContainer');
+  if (debugModeCheckbox && logLevelContainer) {
+    // Set initial visibility
+    logLevelContainer.style.display = debugModeCheckbox.checked ? 'block' : 'none';
+
+    // Add change event listener
+    debugModeCheckbox.addEventListener('change', function () {
+      logLevelContainer.style.display = this.checked ? 'block' : 'none';
+    });
+
+    // Add Test Selected Level button functionality
+    const testSelectedLevelButton = document.getElementById('test-selected-level');
+    if (testSelectedLevelButton) {
+      testSelectedLevelButton.addEventListener('click', function () {
+        // Get the currently selected log level from the UI
+        const selectedLogLevel = parseInt(document.getElementById('logLevel').value, 10);
+
+        // If a selected log level was provided, use it for testing
+        if (selectedLogLevel !== undefined) {
+          // Create an logger
+          const testLogger = new Logger('Options');
+          const levelName = testLogger.getLevelName(selectedLogLevel);
+          testLogger.setLevel(selectedLogLevel);
+          testLogger.setEnabled(true);
+          testLogger.log(levelName, `Using selected log level from UI: ${levelName}`);
+        }
+      });
+    }
+
+    // Add logger test button functionality
+    const testLoggerButton = document.getElementById('test-logger');
+    if (testLoggerButton) {
+      testLoggerButton.addEventListener('click', function () {
+        // Create an options logger
+        const optionsLogger = new Logger('Options');
+        optionsLogger.info('Running logger test from options page...');
+
+        // Get the currently selected log level from the UI
+        const selectedLogLevel = parseInt(document.getElementById('logLevel').value, 10);
+
+        // Run the test if available, passing the currently selected log level
+        if (typeof loggerTest === 'function') {
+          loggerTest(selectedLogLevel);
+        } else {
+          optionsLogger.error('Logger test not available');
+          alert('Logger test function not available. Please check the console for errors.');
+        }
+      });
+    }
+  }
 });
