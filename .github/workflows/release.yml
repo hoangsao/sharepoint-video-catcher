@@ -41,7 +41,7 @@ jobs:
       - name: Create Release and Upload Asset
         uses: softprops/action-gh-release@v1
         with:
-          name: SharePoint Video Catcher ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
           body: |
             **SharePoint Video Catcher ${{ github.ref_name }}**  
             - Initial public release (see README for full changelog).  
