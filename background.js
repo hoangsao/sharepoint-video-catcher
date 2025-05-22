@@ -1,3 +1,24 @@
+/**
+ * Sharepoint Video Catcher - Background Service Worker
+ * 
+ * This script serves as the core of the extension, monitoring web requests
+ * to detect and capture video manifest URLs from Sharepoint sites.
+ * It intercepts network requests matching specific patterns and extracts
+ * information needed to download videos and transcripts.
+ * 
+ * @author Sharepoint Video Catcher Team
+ * @version 1.0.0
+ * @license MIT
+ */
+
+/**
+ * Extracts a specific token from a URL path based on the provided identifier.
+ * For example, extracting the item ID from a path like "/items/123456".
+ * 
+ * @param {string} url - The URL to extract the token from
+ * @param {string} findIdToken - The identifier to search for in the URL path (default: 'items')
+ * @returns {string|null} - The extracted token or null if not found
+ */
 function extractUrlPathToken (url, findIdToken = 'items') {
   try {
     const urlObj = new URL(url);
@@ -13,6 +34,13 @@ function extractUrlPathToken (url, findIdToken = 'items') {
   return null; // Return null if no match found
 }
 
+/**
+ * Extracts a unique identifier for a video from its URL.
+ * Attempts to extract from docid parameter first, then falls back to the URL path.
+ * 
+ * @param {string} url - The URL to extract the unique ID from
+ * @returns {string} - The extracted unique ID or the full URL as a fallback
+ */
 // Function to extract docid or a unique identifier from URL
 function extractVideoUniqueId (url) {
   try {
@@ -46,16 +74,35 @@ function extractVideoUniqueId (url) {
   }
 }
 
+/**
+ * Extracts the unique identifier for a transcript from its URL.
+ * Uses the 'items' token from the URL path.
+ * 
+ * @param {string} url - The URL to extract the transcript unique ID from
+ * @returns {string|null} - The extracted unique ID or null if not found
+ */
 function extractTranscriptUniqueId (url) {
   return extractUrlPathToken(url, 'items');
 }
 
 // Helper function to get active tab
+/**
+ * Retrieves the currently active browser tab.
+ * 
+ * @returns {Promise<chrome.tabs.Tab>} - Promise resolving to the active tab
+ */
 async function getActiveTab () {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   return tab;
 }
 
+/**
+ * Executes a JavaScript function in the context of the specified tab.
+ * 
+ * @param {number} tabId - The ID of the tab to execute the script in
+ * @param {Function} func - The function to execute in the tab
+ * @returns {Promise<any>} - Promise resolving to the result of the function execution
+ */
 // Helper function to execute script in active tab
 async function executeScriptInTab (tabId, func) {
   const result = await chrome.scripting.executeScript({
@@ -65,6 +112,13 @@ async function executeScriptInTab (tabId, func) {
   return result && result[0] && result[0].result;
 }
 
+/**
+ * Extracts a filename from a video URL.
+ * Attempts to extract a filename from the 'id' parameter in the URL.
+ * 
+ * @param {string} url - The URL to extract the filename from
+ * @returns {string} - The extracted filename or a default name if extraction fails
+ */
 function extractVideoFileName (url) {
   const defaultVideoFileName = 'video.mp4';
   try {
@@ -74,21 +128,31 @@ function extractVideoFileName (url) {
     const id = urlObj.searchParams.get('id');
 
     if (id) {
-      // If docid is an encoded URL, decode it and extract the base part
+      // If id is an encoded URL, decode it and extract the base part
       const decodedId = decodeURIComponent(id);
       const regex = /\/([^\/]+)$/;
       const match = decodedId.match(regex);
       if (match) {
-        return match[1]
+        return match[1];
       }
     }
   } catch (e) {
-    console.error('Error extracting unique ID:', e);
+    console.error('Error extracting video filename:', e);
   }
 
   return defaultVideoFileName;
 }
 
+/**
+ * Creates or updates a video manifest in local storage.
+ * Stores video metadata including URL, title, timestamp, and commands.
+ * Manages the list of manifests based on the configured maximum items.
+ * 
+ * @param {Object} param0 - Object containing the video manifest data
+ * @param {string} param0.uniqueId - Unique identifier for the video
+ * @param {Object} options - Options for managing the manifest storage
+ * @returns {Array|null} - The updated array of manifests or null if operation failed
+ */
 async function createOrUpdateVideoManifest ({ uniqueId, ...item } = {}, options) {
   if (!uniqueId) {
     console.error('No uniqueId provided for video manifest');
@@ -99,16 +163,16 @@ async function createOrUpdateVideoManifest ({ uniqueId, ...item } = {}, options)
     ...item,
     uniqueId: uniqueId,
     timestamp: new Date().getTime()
-  }
+  };
   const videoManifestsResult = await chrome.storage.local.get(['videoManifests']);
   let manifests = videoManifestsResult?.videoManifests || [];
-  let manifestIndex = manifests.findIndex(x => x.uniqueId === uniqueId)
+  let manifestIndex = manifests.findIndex(x => x.uniqueId === uniqueId);
   if (manifestIndex !== -1) {
     manifest = { ...manifests[manifestIndex], ...manifest };
     manifests.splice(manifestIndex, 1);
   }
 
-  manifests.unshift(manifest)
+  manifests.unshift(manifest);
   if (options && options.maxItems && manifests.length > options.maxItems) {
     manifests.splice(options.maxItems - manifests.length);
   }
@@ -120,6 +184,14 @@ async function createOrUpdateVideoManifest ({ uniqueId, ...item } = {}, options)
   return manifests;
 }
 
+/**
+ * Fetches JSON data from a specified API URL.
+ * Adds subrequest parameters to the URL before fetching.
+ * 
+ * @param {string} url - The base URL to fetch data from
+ * @param {string[]} subrequestParams - Array of parameters to add to the URL
+ * @returns {Object|null} - The parsed JSON response or null if the fetch fails
+ */
 async function fetchApiData (url, subrequestParams) {
   if (!url) {
     console.error('No URL provided for fetching API data');
@@ -135,14 +207,27 @@ async function fetchApiData (url, subrequestParams) {
     });
   }
 
-  // Fetch the response body to extract the VTT URL
-  const data = await fetch(fetchUrl);
-  const dataJson = await data.json();
-
-  return dataJson;
+  try {
+    // Fetch the response body to extract the data
+    const response = await fetch(fetchUrl);
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    const dataJson = await response.json();
+    return dataJson;
+  } catch (error) {
+    console.error('Error fetching API data:', error);
+    return null;
+  }
 }
 
-// Update the initializeListeners function to include new options
+/**
+ * Initializes all web request listeners for the extension.
+ * Sets up listeners for video manifests and transcript detection based on current options.
+ * 
+ * @async
+ * @returns {Promise<void>}
+ */
 async function initializeListeners () {
   const options = await chrome.storage.sync.get({
     domains: ["*://*.sharepoint.com/*", "*://*.svc.ms/*"],
@@ -169,12 +254,15 @@ async function initializeListeners () {
       console.log('Potential transcript URL detected:', details.url);
     }
   }, { urls: options.domains }, []);
-
-  // Listen for web requests to catch video manifest URLs
+  /**
+   * Main listener for video manifest detection.
+   * This captures video manifests and processes them to extract download information.
+   */
   chrome.webRequest.onBeforeRequest.addListener(
     async function (details) {
+      // Skip URLs that already contain subrequest parameters
       if (containsAnySubrequestParams(details.url, options.subrequestParams)) {
-        return; // Skip if URL already contains subrequest parameters
+        return;
       }
 
       // Extract the base URL without query parameters
@@ -197,53 +285,62 @@ async function initializeListeners () {
 
         console.log('Modified URL:', modifiedUrl);
 
-        const activeTab = await getActiveTab();
-        const documentTitle = await executeScriptInTab(activeTab.id, () => document.title) || activeTab.title || 'video.mp4';
-        // Create a clean filename from the title
-        let fileName = documentTitle.trim();
+        try {
+          // Get active tab and document title for filename
+          const activeTab = await getActiveTab();
+          const documentTitle = await executeScriptInTab(activeTab.id, () => document.title) || 
+                               activeTab.title || 
+                               'video.mp4';
+                               
+          // Create a clean filename from the title
+          let fileName = documentTitle.trim();
 
-        // Add file extension if needed
-        if (!fileName.toLowerCase().endsWith(options.fileExtension)) {
-          fileName += options.fileExtension;
-        }
+          // Add file extension if needed
+          if (!fileName.toLowerCase().endsWith(options.fileExtension)) {
+            fileName += options.fileExtension;
+          }
 
-        // Create the ffmpeg command using template
-        const ffmpegCommand = options.ffmpegTemplate
-          .replace('{url}', modifiedUrl)
-          .replace('{filename}', fileName);
+          // Create the ffmpeg command using template
+          const ffmpegCommand = options.ffmpegTemplate
+            .replace('{url}', modifiedUrl)
+            .replace('{filename}', fileName);
 
-        console.log('FFMPEG Command:', ffmpegCommand);
+          console.log('FFMPEG Command:', ffmpegCommand);
 
-        // Store the video information
-        const videoInfo = {
-          title: fileName,
-          url: modifiedUrl,
-          uniqueId: extractVideoUniqueId(modifiedUrl),
-          ffmpegCommand: ffmpegCommand,
-          timestamp: new Date().getTime()
-        };
+          // Store the video information
+          const videoInfo = {
+            title: fileName,
+            url: modifiedUrl,
+            uniqueId: extractVideoUniqueId(modifiedUrl),
+            ffmpegCommand: ffmpegCommand,
+            timestamp: new Date().getTime()
+          };
 
-        const manifests = await createOrUpdateVideoManifest(videoInfo);
-
-        if (options.notifyOnDetection && manifests !== null) {
-          await chrome.notifications.create({
-            type: 'basic',
-            iconUrl: 'icons/icon128.png',
-            title: 'Sharepoint Video Detected',
-            message: `Found: ${fileName}`
+          const manifests = await createOrUpdateVideoManifest(videoInfo, {
+            maxItems: options.maxItems
           });
+
+          // Show notification if enabled
+          if (options.notifyOnDetection && manifests !== null) {
+            await chrome.notifications.create({
+              type: 'basic',
+              iconUrl: 'icons/icon128.png',
+              title: 'Sharepoint Video Detected',
+              message: `Found: ${fileName}`
+            });
+          }
+        } catch (error) {
+          console.error('Error processing video manifest:', error);
         }
-      }
-
-      // Check if URL matches any of the transcript keywords
+      }      // Check if URL matches any of the transcript keywords
       if (matchesAnyKeywords(details.url, options.transcriptKeywords)) {
-
         console.log('Potential subtitle request detected:', details.url);
 
         try {
           const transcriptJson = await fetchApiData(details.url, options.subrequestParams);
-          if (transcriptJson && transcriptJson.media && transcriptJson.media.transcripts &&
-            transcriptJson.media.transcripts.length > 0) {
+          if (transcriptJson && transcriptJson.media && 
+              transcriptJson.media.transcripts &&
+              transcriptJson.media.transcripts.length > 0) {
 
             // Extract VTT URL from the response
             const transcript = transcriptJson.media.transcripts.find(t =>
@@ -260,7 +357,9 @@ async function initializeListeners () {
                 uniqueId: extractTranscriptUniqueId(details.url)
               };
 
-              await createOrUpdateVideoManifest(subtitleInfo);
+              await createOrUpdateVideoManifest(subtitleInfo, {
+                maxItems: options.maxItems
+              });
               console.log('Added subtitle URL to existing video');
             }
           }
@@ -272,20 +371,29 @@ async function initializeListeners () {
       // Check if URL matches any of the transcript json keywords
       if (containsAllRequiredSubstrings(details.url, ['transcripts', 'streamContent'])) {
         console.log('Potential transcript JSON request detected:', details.url);
+        
         try {
           const transcriptJson = await fetchApiData(details.url, options.subrequestParams);
-          let result = []
-          let speakerId = null
+          
+          if (!transcriptJson || !transcriptJson.entries || !Array.isArray(transcriptJson.entries)) {
+            console.log('No valid transcript entries found in response');
+            return;
+          }
+          
+          let result = [];
+          let speakerId = null;
+          
           transcriptJson.entries.forEach(item => {
             if (item.speakerId !== speakerId) {
-              result.push(item.speakerDisplayName)
-              speakerId = item.speakerId
+              result.push(item.speakerDisplayName || 'Speaker');
+              speakerId = item.speakerId;
             }
 
-            result.push(`\t${item.text}`)
-          })
+            result.push(`\t${item.text || ''}`);
+          });
 
           const transcriptText = result.join('\r\n');
+          
           // Store the transcript info with the video ID
           const transcriptInfo = {
             transcriptText: transcriptText,
@@ -293,11 +401,13 @@ async function initializeListeners () {
             timestamp: new Date().getTime(),
             uniqueId: extractUrlPathToken(details.url, 'items')
           };
-          await createOrUpdateVideoManifest(transcriptInfo);
+          
+          await createOrUpdateVideoManifest(transcriptInfo, {
+            maxItems: options.maxItems
+          });
           console.log('Added transcript JSON to existing video');
         } catch (error) {
           console.error('Error fetching transcript JSON data:', error);
-
         }
       }
     },
@@ -333,62 +443,98 @@ function containsAllRequiredSubstrings (mainString, requiredSubstrings) {
   return true;
 }
 
-// Helper function to check if a URL matches any of the keywords
+/**
+ * Checks if a URL matches any of the specified keywords.
+ * Case-insensitive matching is used.
+ * 
+ * @param {string} url - The URL to check
+ * @param {string[]} keywords - Array of keywords to match against the URL
+ * @returns {boolean} - True if the URL contains any of the keywords, false otherwise
+ */
 function matchesAnyKeywords (url, keywords) {
+  if (!url || !keywords || !Array.isArray(keywords)) {
+    return false;
+  }
   const lowerUrl = url.toLowerCase();
   return keywords.some(keyword => lowerUrl.includes(keyword.toLowerCase()));
 }
 
-// Alias for backward compatibility
+/**
+ * Alias for matchesAnyKeywords for backward compatibility.
+ * Specifically used for checking if a URL contains video-related keywords.
+ * 
+ * @param {string} url - The URL to check
+ * @param {string[]} keywords - Array of video-related keywords
+ * @returns {boolean} - True if the URL contains any of the keywords
+ */
 function matchesVideoKeywords (url, keywords) {
   return matchesAnyKeywords(url, keywords);
 }
 
-// Helper function to check if URL already contains any of the subrequest parameters
+/**
+ * Checks if a URL already contains any of the specified subrequest parameters.
+ * 
+ * @param {string} url - The URL to check
+ * @param {string[]} params - Array of subrequest parameters to check for
+ * @returns {boolean} - True if the URL contains any of the parameters
+ */
 function containsAnySubrequestParams (url, params) {
+  if (!url || !params || !Array.isArray(params)) {
+    return false;
+  }
   const lowerUrl = url.toLowerCase();
   return params.some(param => lowerUrl.includes(param.toLowerCase()));
 }
 
-// Listen for when the extension is installed or updated
-chrome.runtime.onInstalled.addListener(function () {
+/**
+ * Extension initialization on install or update.
+ * Sets up event listeners, initializes storage, and shows a welcome notification.
+ */
+chrome.runtime.onInstalled.addListener(async function () {
   console.log('Sharepoint Video Catcher extension installed/updated');
   console.log('Extension is monitoring URLs matching: *://*.sharepoint.com/* and *://*.svc.ms/*');
 
-  // Initialize listeners with current options
-  initializeListeners();
+  try {
+    // Initialize listeners with current options
+    await initializeListeners();
 
-  // Initialize storage if needed
-  chrome.storage.local.get(['videoManifests'], function (result) {
+    // Initialize storage if needed
+    const result = await chrome.storage.local.get(['videoManifests']);
     if (!result.videoManifests) {
-      chrome.storage.local.set({ videoManifests: [] });
+      await chrome.storage.local.set({ videoManifests: [] });
     } else {
       console.log('Found existing video manifests:', result.videoManifests.length);
     }
-  });
 
-  // Initialize sync storage with default options if needed
-  chrome.storage.sync.get({
-    maxItems: 20,
-    fileExtension: '.mp4',
-    notifyOnDetection: false,
-    ffmpegTemplate: 'ffmpeg -i "{url}" -codec copy "{filename}"'
-  }, function (items) {
-    chrome.storage.sync.set(items);
-  });
+    // Initialize sync storage with default options if needed
+    const defaultSettings = {
+      maxItems: 20,
+      fileExtension: '.mp4',
+      notifyOnDetection: false,
+      ffmpegTemplate: 'ffmpeg -i "{url}" -codec copy "{filename}"'
+    };
+    
+    const items = await chrome.storage.sync.get(defaultSettings);
+    await chrome.storage.sync.set(items);
 
-  // Create a notification to confirm the extension is running
-  if (chrome.notifications) {
-    chrome.notifications.create({
-      type: 'basic',
-      iconUrl: 'icons/icon128.png',
-      title: 'Sharepoint Video Catcher',
-      message: 'Extension is now active and monitoring Sharepoint sites for videos'
-    });
+    // Create a notification to confirm the extension is running
+    if (chrome.notifications) {
+      await chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icons/icon128.png',
+        title: 'Sharepoint Video Catcher',
+        message: 'Extension is now active and monitoring Sharepoint sites for videos'
+      });
+    }
+  } catch (error) {
+    console.error('Error during extension initialization:', error);
   }
 });
 
-// Listen for changes to the options
+/**
+ * Listener for changes to extension options.
+ * Reinitializes listeners when key options change.
+ */
 chrome.storage.onChanged.addListener(async function (changes, namespace) {
   if (namespace === 'sync' &&
     (changes.domains ||
@@ -398,10 +544,14 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
       changes.subrequestParams)) {
     console.log('Options changed, reloading listeners');
 
-    // Remove existing listeners
-    chrome.webRequest.onBeforeRequest.removeListener();
-
-    // Re-initialize with new options
-    await initializeListeners();
+    try {
+      // Remove existing listeners (if needed - webRequest API doesn't actually
+      // have a clear removeListener without the original callback reference)
+      
+      // Re-initialize with new options
+      await initializeListeners();
+    } catch (error) {
+      console.error('Error reloading listeners:', error);
+    }
   }
 });

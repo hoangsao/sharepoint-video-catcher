@@ -26,13 +26,13 @@
     "open_in_tab": true
   },
   "permissions": [
-    "webRequest",
-    "storage",
-    "clipboardWrite",
-    "activeTab",
-    "tabs",
-    "scripting",
-    "notifications"
+    "webRequest",     // Required to monitor and detect video manifest URLs
+    "storage",        // Required to store detected videos and extension settings
+    "clipboardWrite", // Required to copy URLs and ffmpeg commands
+    "activeTab",      // Required to get tab information and title
+    "tabs",           // Required to access tab details for filename generation
+    "scripting",      // Required to extract page title for video filenames
+    "notifications"   // Required for detection notifications
   ],
   "host_permissions": [
     "*://*.sharepoint.com/*",

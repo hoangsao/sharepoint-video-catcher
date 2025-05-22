@@ -2,89 +2,42 @@
 <html>
 <head>
   <title>Sharepoint Video Catcher Options</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    .form-group {
-      margin-bottom: 20px;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    input[type="text"], textarea, select {
-      width: 100%;
-      padding: 8px;
-      box-sizing: border-box;
-    }
-    textarea {
-      height: 100px;
-      font-family: monospace;
-    }
-    button {
-      padding: 8px 16px;
-      background-color: #0078d4;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #005a9e;
-    }
-    .hint {
-      font-size: 0.8em;
-      color: #666;
-      margin-top: 5px;
-    }
-    
-    .section-header {
-      border-bottom: 1px solid #ddd;
-      margin-top: 25px;
-      padding-bottom: 5px;
-      color: #0078d4;
-    }
-  </style>
+  <link rel="stylesheet" href="options.css">
 </head>
 <body>
   <h1>Sharepoint Video Catcher Options</h1>
 
   <h3 class="section-header">Video Detection Settings</h3>
-  <div class="form-group">
+  <div class="option-group">
     <label for="domains">Domains to Monitor:</label>
     <textarea id="domains" placeholder="One domain pattern per line, e.g. *://*.sharepoint.com/*"></textarea>
     <div class="hint">Enter domain patterns to monitor, one per line. Use * for wildcards.</div>
   </div>
 
-  <div class="form-group">
+  <div class="option-group">
     <label for="removeParams">Parameters to Remove:</label>
     <textarea id="removeParams" placeholder="One parameter per line, e.g. enableCdn"></textarea>
     <div class="hint">Enter URL parameters to remove from detected video URLs.</div>
   </div>
-
-  <div class="form-group">
+  <div class="option-group">
     <label for="videoKeywords">Video URL Detection Keywords:</label>
     <textarea id="videoKeywords" placeholder="One keyword per line, e.g. videomanifest"></textarea>
     <div class="hint">Enter keywords used to identify video URLs.</div>
   </div>
 
-  <div class="form-group">
+  <div class="option-group">
     <label for="fileExtension">Default File Extension:</label>
     <input type="text" id="fileExtension" placeholder=".mp4">
   </div>
 
-  <div class="form-group">
+  <div class="option-group">
     <label for="ffmpegTemplate">FFMPEG Command Template:</label>
     <textarea id="ffmpegTemplate" placeholder='ffmpeg -i "{url}" -codec copy "{filename}"'></textarea>
     <div class="hint">Use {url} and {filename} as placeholders.</div>
   </div>
 
   <h3 class="section-header">Transcript Detection Settings</h3>
-  <div class="form-group">
+  <div class="option-group">
     <label for="transcriptKeywords">Transcript URL Detection Keywords:</label>
     <textarea id="transcriptKeywords" placeholder="One keyword per line, e.g. media/transcripts"></textarea>
     <div class="hint">Enter keywords used to identify transcript URLs.</div>
@@ -92,26 +45,26 @@
 
   <h3 class="section-header">Common Settings</h3>
   
-  <div class="form-group">
+  <div class="option-group">
     <label for="subrequestParams">Subrequest Parameters:</label>
     <textarea id="subrequestParams" placeholder="One parameter per line, e.g. subRequest=true"></textarea>
     <div class="hint">Parameters to add when fetching Subrequest data.</div>
   </div>
-
-  <div class="form-group">
+  <div class="option-group">
     <label for="maxItems">Maximum Items to Store:</label>
     <input type="number" id="maxItems" min="1" max="100">
+    <div class="hint">The maximum number of videos to keep in history.</div>
   </div>
 
-  <div class="form-group">
-    <label>
+  <div class="option-group">
+    <label class="checkbox-label">
       <input type="checkbox" id="notifyOnDetection">
       Show notification when video is detected
     </label>
   </div>
 
   <button id="save">Save Options</button>
-  <div id="status" style="margin-top: 10px;"></div>
+  <div id="status"></div>
 
   <script src="options.js"></script>
 </body>

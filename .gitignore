@@ -20,6 +20,21 @@ node_modules/
 ehthumbs.db
 Thumbs.db
 
+# Temporary files
+*~
+*.bak
+*.tmp
+*.temp
+
+# Backup folders
+backup_*/
+
+# Log files
+*.log
+
+# Personal settings files
+settings.json
+
 # Logs
 *.log
 npm-debug.log*

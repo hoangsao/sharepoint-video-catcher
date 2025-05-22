@@ -29,6 +29,18 @@ A browser extension for Microsoft Edge or Chrome that helps detect and download 
 - For downloading: ffmpeg must be installed on your system
 - Compatible with Microsoft Edge and Google Chrome
 
+## Extension Permissions
+
+This extension requires the following permissions:
+
+- **webRequest**: Required to monitor and detect video manifest URLs
+- **storage**: Required to store detected videos and extension settings
+- **clipboardWrite**: Required to copy URLs and ffmpeg commands to clipboard
+- **activeTab** and **tabs**: Required to get tab information and title for filename generation
+- **scripting**: Required to extract page title for video filenames
+- **notifications**: Required for video detection notifications
+- **host_permissions** for Sharepoint domains: Required to monitor network traffic on Sharepoint sites
+
 ## Installation
 
 ### Loading the unpacked extension (Developer Mode)

@@ -1,5 +1,18 @@
+# Sharepoint Video Catcher - Build Script
+# 
+# This script packages the extension for distribution.
+# It creates a zip file that can be uploaded to browser extension stores.
+#
+# Usage: 
+#   .\build.ps1 -Version "1.0.0"
+#
+# @author Sharepoint Video Catcher Team
+# @version 1.0.0
+# @license MIT
+
 param (
-    [string]$Version = "v1.0.0"
+    [Parameter(Mandatory=$false, HelpMessage="Version number for the build (e.g. 1.0.0)")]
+    [string]$Version = "1.0.0"
 )
 
 # Ensure version starts with 'v'
@@ -73,6 +86,7 @@ try {
                         }
                     } else {
                         Copy-Item -Path $_.FullName -Destination $targetPath -Force
+                        Write-Host "  - Copied: $($_.Name)" -ForegroundColor Cyan
                     }
                 }
             } else {
@@ -83,7 +97,15 @@ try {
             $sourcePath = Join-Path $sourceDir $filePattern
             if (Test-Path $sourcePath) {
                 $destPath = Join-Path $tempDir $filePattern
+                $destDir = Split-Path -Parent $destPath
+                
+                # Create destination directory if it doesn't exist
+                if (-not (Test-Path $destDir) -and $destDir -ne "") {
+                    New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+                }
+                
                 Copy-Item -Path $sourcePath -Destination $destPath -Force
+                Write-Host "  - Copied: $filePattern" -ForegroundColor Cyan
             } else {
                 Write-Warning "File not found: $sourcePath"
             }
