@@ -203,39 +203,18 @@ document.addEventListener('DOMContentLoaded', () => {
       logLevelContainer.style.display = this.checked ? 'block' : 'none';
     });
 
-    // Add Test Selected Level button functionality
-    const testSelectedLevelButton = document.getElementById('test-selected-level');
-    if (testSelectedLevelButton) {
-      testSelectedLevelButton.addEventListener('click', function () {
-        // Get the currently selected log level from the UI
-        const selectedLogLevel = parseInt(document.getElementById('logLevel').value, 10);
-
-        // If a selected log level was provided, use it for testing
-        if (selectedLogLevel !== undefined) {
-          // Create an logger
-          const testLogger = new Logger('Options');
-          const levelName = testLogger.getLevelName(selectedLogLevel);
-          testLogger.setLevel(selectedLogLevel);
-          testLogger.setEnabled(true);
-          testLogger.log(levelName, `Using selected log level from UI: ${levelName}`);
-        }
-      });
-    }
-
     // Add logger test button functionality
     const testLoggerButton = document.getElementById('test-logger');
     if (testLoggerButton) {
       testLoggerButton.addEventListener('click', function () {
         // Create an options logger
         const optionsLogger = new Logger('Options');
+        optionsLogger.setEnabled(true);
         optionsLogger.info('Running logger test from options page...');
-
-        // Get the currently selected log level from the UI
-        const selectedLogLevel = parseInt(document.getElementById('logLevel').value, 10);
 
         // Run the test if available, passing the currently selected log level
         if (typeof loggerTest === 'function') {
-          loggerTest(selectedLogLevel);
+          loggerTest();
         } else {
           optionsLogger.error('Logger test not available');
           alert('Logger test function not available. Please check the console for errors.');

@@ -14,6 +14,8 @@
 function loggerTest() {
   // Create a test logger
   const testLogger = new Logger('LoggerTest');
+  testLogger.setEnabled(true);
+  testLogger.setLevel(LogLevel.DEBUG);
   
   // Log the current settings
   testLogger.info('Logger test started');
@@ -49,6 +51,7 @@ function loggerTest() {
   
   testLogger.group('Testing different log levels', () => {
     // Log at ERROR level
+    testLogger.info('----------ERROR level----------');
     testLogger.info('Changing to ERROR level');
     testLogger.setLevel(LogLevel.ERROR);
     testLogger.debug('This debug message should NOT appear');
@@ -57,6 +60,7 @@ function loggerTest() {
     testLogger.error('This error message should appear');
     
     // Log at WARN level
+    testLogger.info('----------WARN level----------');
     testLogger.info('Changing to WARN level');
     testLogger.setLevel(LogLevel.WARN);
     testLogger.debug('This debug message should NOT appear');
@@ -65,6 +69,7 @@ function loggerTest() {
     testLogger.error('This error message should appear');
     
     // Log at INFO level
+    testLogger.info('----------INFO level----------');
     testLogger.info('Changing to INFO level');
     testLogger.setLevel(LogLevel.INFO);
     testLogger.debug('This debug message should NOT appear');
@@ -73,6 +78,7 @@ function loggerTest() {
     testLogger.error('This error message should appear');
     
     // Log at DEBUG level
+    testLogger.info('----------DEBUG level----------');
     testLogger.info('Changing to DEBUG level');
     testLogger.setLevel(LogLevel.DEBUG);
     testLogger.debug('This debug message should appear');

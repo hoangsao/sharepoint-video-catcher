@@ -86,7 +86,7 @@ function extractVideoUniqueId (url) {
     // If no docid, use the path without query parameters as unique identifier
     return urlObj.origin + urlObj.pathname;
   } catch (e) {
-    console.error('Error extracting unique ID:', e);
+    bgLogger.error('Error extracting unique ID:', e);
     return url; // Fallback to the full URL if parsing fails
   }
 }
@@ -154,7 +154,7 @@ function extractVideoFileName (url) {
       }
     }
   } catch (e) {
-    console.error('Error extracting video filename:', e);
+    bgLogger.error('Error extracting video filename:', e);
   }
 
   return defaultVideoFileName;
@@ -172,7 +172,7 @@ function extractVideoFileName (url) {
  */
 async function createOrUpdateVideoManifest ({ uniqueId, ...item } = {}, options) {
   if (!uniqueId) {
-    console.error('No uniqueId provided for video manifest');
+    bgLogger.error('No uniqueId provided for video manifest');
     return null;
   }
 
@@ -211,7 +211,7 @@ async function createOrUpdateVideoManifest ({ uniqueId, ...item } = {}, options)
  */
 async function fetchApiData (url, subrequestParams) {
   if (!url) {
-    console.error('No URL provided for fetching API data');
+    bgLogger.error('No URL provided for fetching API data');
     return null;
   }
 
@@ -233,7 +233,7 @@ async function fetchApiData (url, subrequestParams) {
     const dataJson = await response.json();
     return dataJson;
   } catch (error) {
-    console.error('Error fetching API data:', error);
+    bgLogger.error('Error fetching API data:', error);
     return null;
   }
 }
@@ -347,7 +347,7 @@ async function initializeListeners () {
             });
           }
         } catch (error) {
-          console.error('Error processing video manifest:', error);
+          bgLogger.error('Error processing video manifest:', error);
         }
       }      // Check if URL matches any of the transcript keywords
       if (matchesAnyKeywords(details.url, options.transcriptKeywords)) {
@@ -381,7 +381,7 @@ async function initializeListeners () {
             }
           }
         } catch (error) {
-          console.error('Error fetching subtitle data:', error);
+          bgLogger.error('Error fetching subtitle data:', error);
         }
       }
 
@@ -424,7 +424,7 @@ async function initializeListeners () {
           });
           bgLogger.info('Added transcript JSON to existing video');
         } catch (error) {
-          console.error('Error fetching transcript JSON data:', error);
+          bgLogger.error('Error fetching transcript JSON data:', error);
         }
       }
     },
@@ -442,12 +442,12 @@ async function initializeListeners () {
  */
 function containsAllRequiredSubstrings (mainString, requiredSubstrings) {
   if (typeof mainString !== 'string') {
-    console.error("Error: 'mainString' must be a string.");
+    bgLogger.error("Error: 'mainString' must be a string.");
     return false;
   }
 
   if (!Array.isArray(requiredSubstrings)) {
-    console.error("Error: 'requiredSubstrings' must be an array.");
+    bgLogger.error("Error: 'requiredSubstrings' must be an array.");
     return false;
   }
 
@@ -543,7 +543,7 @@ chrome.runtime.onInstalled.addListener(async function () {  bgLogger.info('Share
       });
     }
   } catch (error) {
-    console.error('Error during extension initialization:', error);
+    bgLogger.error('Error during extension initialization:', error);
   }
 });
 
@@ -567,7 +567,7 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
       // Re-initialize with new options
       await initializeListeners();
     } catch (error) {
-      console.error('Error reloading listeners:', error);
+      bgLogger.error('Error reloading listeners:', error);
     }
   }
 });
