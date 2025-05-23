@@ -94,6 +94,52 @@ function showCopyError(button, errorMsg = 'Error') {
 }
 
 /**
+ * Downloads transcript text as a .txt file
+ * 
+ * @param {string} transcriptText - The transcript text content to download
+ * @param {string} baseName - Base name for the downloaded file (without extension)
+ */
+function downloadTranscriptAsText(transcriptText, baseName) {
+  if (!transcriptText || typeof transcriptText !== 'string') {
+    popupLogger.error('Invalid transcript text provided for download');
+    alert('Invalid transcript data');
+    return;
+  }
+  
+  try {
+    // Create a Blob containing the transcript text
+    const blob = new Blob([transcriptText], { type: 'text/plain' });
+    
+    // Create a URL for the Blob
+    const url = URL.createObjectURL(blob);
+    
+    // Create a sanitized filename
+    const fileName = `${baseName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_transcript.txt`;
+    
+    // Create a temporary link element to trigger the download
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.style.display = 'none';
+    
+    // Add to the DOM, click to trigger download, then remove
+    document.body.appendChild(a);
+    a.click();
+    
+    // Cleanup: remove the element and revoke the object URL
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+    
+    popupLogger.info('Transcript downloaded as:', fileName);
+  } catch (error) {
+    popupLogger.error('Error downloading transcript:', error);
+    throw error; // Rethrow the error for the caller to handle
+  }
+}
+
+/**
  * Displays the list of detected video manifests in the popup UI.
  * Creates DOM elements for each video, including URL and command copy buttons,
  * subtitle download options, and transcript data if available.
@@ -201,9 +247,7 @@ function displayVideoManifests(manifests) {
         subtitleContainer.appendChild(downloadSubtitleButton);
         
         videoItem.appendChild(subtitleContainer);
-      }
-
-      // Add transcript section if available
+      }      // Add transcript section if available
       if (video.transcriptText) {
         const transcriptContainer = document.createElement('div');
         transcriptContainer.className = 'command-container transcript-container';
@@ -220,6 +264,19 @@ function displayVideoManifests(manifests) {
           copyToClipboard(video.transcriptText, event);
         };
         transcriptContainer.appendChild(copyTranscriptButton);
+        
+        // Add download button for transcript text
+        const downloadTranscriptButton = document.createElement('button');
+        downloadTranscriptButton.textContent = 'Download';
+        downloadTranscriptButton.onclick = function() {
+          try {
+            downloadTranscriptAsText(video.transcriptText, video.title || 'transcript');
+          } catch (error) {
+            popupLogger.error('Error downloading transcript:', error);
+            alert('Failed to download transcript. Please try copying the text instead.');
+          }
+        };
+        transcriptContainer.appendChild(downloadTranscriptButton);
 
         videoItem.appendChild(transcriptContainer);
       }
