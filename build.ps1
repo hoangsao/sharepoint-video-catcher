@@ -42,7 +42,10 @@ if (Test-Path $outputPath) {
 
 # Define files to include
 $filesToInclude = @(
+    # Core extension files
     "background.js",
+    "constants.js",
+    "import-utils.js",
     "manifest.json",
     "popup.css",
     "popup.html",
@@ -52,8 +55,15 @@ $filesToInclude = @(
     "options.js",
     "logger.js",
     "logger-test.js",
+    
+    # Documentation
     "README.md",
     "LOGGER.md",
+    "GETTING-STARTED.md",
+    "LICENSE",
+    "test-guide.html",
+    
+    # Resources
     "icons/*"
 )
 
