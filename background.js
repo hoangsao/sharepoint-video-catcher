@@ -29,6 +29,94 @@ try {
   bgLogger.error('Failed to load logger test script:', e);
 }
 
+// Service worker keepAlive mechanism to prevent inactive state
+let keepAliveInterval;
+
+// Track if listeners are already initialized to prevent duplicate registration
+let listenersInitialized = false;
+
+// Track last activity timestamp for better service worker lifecycle management
+let lastActivityTimestamp = Date.now();
+
+/**
+ * Keeps the service worker alive by performing periodic operations, but only when necessary.
+ * Uses a smart approach to prevent unnecessary resource usage.
+ */
+function startKeepAlive() {
+  if (keepAliveInterval) {
+    clearInterval(keepAliveInterval);
+  }
+  
+  // Ping every 45 seconds when actively processing
+  // Increased interval to reduce unnecessary wakeups
+  keepAliveInterval = setInterval(() => {
+    chrome.storage.local.get(['keepAlive'], () => {
+      // This operation keeps the service worker active
+      bgLogger.debug('Service worker keepAlive ping');
+    });
+  }, 45000); // Increased from 25 seconds to 45 seconds
+  
+  bgLogger.debug('Service worker keepAlive started');
+  
+  // Auto-stop after 90 seconds of inactivity
+  // Reduced from 3 minutes to allow faster inactive state
+  setTimeout(() => {
+    bgLogger.debug('Auto-stop keepAlive check');
+    chrome.storage.local.get(['lastActivity'], (result) => {
+      const lastActivity = result.lastActivity || 0;
+      const now = Date.now();
+      
+      // If no activity for 90 seconds, stop the keepAlive
+      if (now - lastActivity > 90000) {
+        stopKeepAlive();
+        bgLogger.info('Service worker keepAlive auto-stopped due to inactivity');
+      }
+    });
+  }, 90000); // 90 seconds - reduced from 3 minutes
+}
+
+/**
+ * Stops the keepAlive mechanism
+ */
+function stopKeepAlive() {
+  if (keepAliveInterval) {
+    clearInterval(keepAliveInterval);
+    keepAliveInterval = null;
+    bgLogger.debug('Service worker keepAlive stopped');
+  }
+}
+
+/**
+ * Self-heal mechanism to re-initialize listeners if they're lost
+ * Also checks for inactivity and stops keepAlive if necessary
+ */
+async function ensureListenersActive() {
+  try {
+    // Check if our main listener is still active by verifying hasListeners
+    if (!chrome.webRequest.onBeforeRequest.hasListeners()) {
+      bgLogger.warn('WebRequest listeners lost, re-initializing...');
+      listenersInitialized = false;
+      await initializeExtension();
+    }
+    
+    // Also check for inactivity and stop keepAlive if it's been more than 5 minutes
+    if (keepAliveInterval) {
+      chrome.storage.local.get(['lastActivity'], (result) => {
+        const lastActivity = result.lastActivity || 0;
+        const now = Date.now();
+        
+        // If no activity for 5 minutes, force stop keepAlive regardless of interval
+        if (now - lastActivity > 300000) { // 5 minutes
+          stopKeepAlive();
+          bgLogger.info('Service worker keepAlive force-stopped due to extended inactivity');
+        }
+      });
+    }
+  } catch (error) {
+    bgLogger.error('Error checking listeners status:', error);
+  }
+}
+
 /**
  * Extracts a specific token from a URL path based on the provided identifier.
  * For example, extracting the item ID from a path like "/items/123456".
@@ -37,7 +125,8 @@ try {
  * @param {string} findIdToken - The identifier to search for in the URL path (default: 'items')
  * @returns {string|null} - The extracted token or null if not found
  */
-function extractUrlPathToken (url, findIdToken = 'items') {  try {
+function extractUrlPathToken (url, findIdToken = 'items') {
+  try {
     const urlObj = new URL(url);
     const regexPattern = `\\/${findIdToken}\\/([^\\/]+)`;
     const regex = new RegExp(regexPattern);
@@ -264,20 +353,12 @@ async function initializeListeners () {
     maxItems: 20,
     notifyOnDetection: false
   });
+  // Check if listeners are already registered to prevent duplicates
+  if (chrome.webRequest.onBeforeRequest.hasListeners()) {
+    bgLogger.debug('WebRequest listeners already exist, skipping registration');
+    return; // Skip registration if listeners already exist
+  }
 
-  // Debug logger for requests (can be disabled in production)
-  chrome.webRequest.onBeforeRequest.addListener(function (details) {
-    // Check if URL contains any of the video keywords
-    if (matchesVideoKeywords(details.url, options.videoKeywords)) {
-      bgLogger.debug('Potential video URL detected:', details.url);
-    }
-
-    // Check if URL contains any of the transcript keywords
-    if (matchesAnyKeywords(details.url, options.transcriptKeywords) &&
-      !matchesAnyKeywords(details.url, options.subrequestParams)) {
-      bgLogger.debug('Potential transcript URL detected:', details.url);
-    }
-  }, { urls: options.domains }, []);
   /**
    * Main listener for video manifest detection.
    * This captures video manifests and processes them to extract download information.
@@ -294,10 +375,11 @@ async function initializeListeners () {
 
       // Check if URL matches any of the video keywords
       if (matchesAnyKeywords(urlWithoutParams, options.videoKeywords) ||
-        matchesAnyKeywords(details.url, options.videoKeywords)) {
+        matchesAnyKeywords(details.url, options.videoKeywords)) {        bgLogger.info('Video manifest detected:', details.url);
 
-        bgLogger.info('Video manifest detected:', details.url);
-
+        // Start keepAlive when actively processing video requests
+        startKeepAlive();
+        
         // Remove unwanted parameters
         let modifiedUrl = details.url;
         options.removeParams.forEach(param => {
@@ -434,6 +516,9 @@ async function initializeListeners () {
           bgLogger.error('Error fetching transcript JSON data:', error);
         }
       }
+
+      // Update the last activity timestamp
+      updateActivityTimestamp();
     },
     { urls: options.domains },
     ["requestBody"]
@@ -511,20 +596,38 @@ function containsAnySubrequestParams (url, params) {
 }
 
 /**
- * Extension initialization on install or update.
- * Sets up event listeners, initializes storage, and shows a welcome notification.
+ * Updates the last activity timestamp to prevent premature service worker shutdown
+ * Only updates when there is actual activity that requires keeping the worker alive
  */
-chrome.runtime.onInstalled.addListener(async function () {  bgLogger.info('Sharepoint Video Catcher extension installed/updated');
+function updateActivityTimestamp() {
+  lastActivityTimestamp = Date.now();
+  chrome.storage.local.set({ 'lastActivity': lastActivityTimestamp });
+  
+  // Only log at debug level to avoid flooding logs
+  bgLogger.debug('Activity timestamp updated');
+}
+
+/**
+ * Common initialization function called on startup and install.
+ * Sets up event listeners, initializes storage.
+ */
+async function initializeExtension() {
+  bgLogger.info('Initializing Sharepoint Video Catcher extension');
   bgLogger.info('Extension is monitoring URLs matching: *://*.sharepoint.com/* and *://*.svc.ms/*');
 
   try {
-    // Initialize listeners with current options
-    await initializeListeners();
+    // Initialize listeners with current options (only if not already initialized)
+    if (!listenersInitialized) {
+      await initializeListeners();
+      listenersInitialized = true;
+      bgLogger.info('Web request listeners initialized');
+    }
 
     // Initialize storage if needed
     const result = await chrome.storage.local.get(['videoManifests']);
     if (!result.videoManifests) {
       await chrome.storage.local.set({ videoManifests: [] });
+      bgLogger.info('Initialized empty video manifests storage');
     } else {
       bgLogger.info('Found existing video manifests:', result.videoManifests.length);
     }
@@ -540,18 +643,43 @@ chrome.runtime.onInstalled.addListener(async function () {  bgLogger.info('Share
     const items = await chrome.storage.sync.get(defaultSettings);
     await chrome.storage.sync.set(items);
 
-    // Create a notification to confirm the extension is running
-    if (chrome.notifications) {
+  } catch (error) {
+    bgLogger.error('Error during extension initialization:', error);
+  }
+}
+
+/**
+ * Extension initialization on install or update.
+ * Sets up event listeners, initializes storage, and shows a welcome notification.
+ */
+chrome.runtime.onInstalled.addListener(async function (details) {
+  bgLogger.info('Extension installed/updated, reason:', details.reason);
+  
+  await initializeExtension();
+
+  // Create a notification to confirm the extension is running (only on install/update)
+  if (chrome.notifications && (details.reason === 'install' || details.reason === 'update')) {
+    try {
       await chrome.notifications.create({
         type: 'basic',
         iconUrl: 'icons/icon128.png',
         title: 'Sharepoint Video Catcher',
         message: 'Extension is now active and monitoring Sharepoint sites for videos'
       });
+    } catch (error) {
+      bgLogger.error('Error creating notification:', error);
     }
-  } catch (error) {
-    bgLogger.error('Error during extension initialization:', error);
   }
+});
+
+/**
+ * Extension startup listener.
+ * Called when the service worker starts up (browser start, extension enable, etc.).
+ * This ensures listeners are re-registered when the service worker becomes active again.
+ */
+chrome.runtime.onStartup.addListener(async function () {
+  bgLogger.info('Service worker starting up - reinitializing extension');
+  await initializeExtension();
 });
 
 /**
@@ -568,13 +696,41 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
     bgLogger.info('Options changed, reloading listeners');
 
     try {
-      // Remove existing listeners (if needed - webRequest API doesn't actually
-      // have a clear removeListener without the original callback reference)
+      // Clear the initialization flag to allow re-initialization
+      listenersInitialized = false;
       
-      // Re-initialize with new options
+      // Note: We can't remove specific listeners without reference to callback,
+      // but Chrome will replace listeners with same filter patterns
       await initializeListeners();
+      listenersInitialized = true;
+      bgLogger.info('Listeners reloaded with new options');
     } catch (error) {
       bgLogger.error('Error reloading listeners:', error);
     }
   }
 });
+
+// Start the keepAlive mechanism on service worker startup
+// Only start it initially for installation/update scenarios
+// Normal operations will start it on-demand when detecting videos
+if (chrome.runtime.onInstalled) {
+  // Do NOT automatically start keepAlive on every load
+  // Let it be event-driven instead
+  // startKeepAlive();
+  
+  bgLogger.info('Service worker initialized in event-driven mode');
+}
+
+// Set up less frequent health check for listeners
+// This conserves resources while still ensuring reliability
+setInterval(ensureListenersActive, 300000); // Check every 5 minutes to reduce resource usage
+
+// Initialize immediately when script loads (for cases when service worker restarts)
+(async function() {
+  try {
+    await initializeExtension();
+    bgLogger.info('Extension initialized on script load');
+  } catch (error) {
+    bgLogger.error('Error during immediate initialization:', error);
+  }
+})();
