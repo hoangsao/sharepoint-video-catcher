@@ -230,8 +230,15 @@ async function fetchApiData (url, subrequestParams) {
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
-    const dataJson = await response.json();
-    return dataJson;
+
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const dataJson = await response.json();
+      return dataJson;
+    } else {
+      bgLogger.warn(`Received non-JSON response for ${fetchUrl}. Content-Type: ${contentType}`);
+      return await response.text();
+    }
   } catch (error) {
     bgLogger.error('Error fetching API data:', error);
     return null;
