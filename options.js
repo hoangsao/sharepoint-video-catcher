@@ -10,8 +10,8 @@
  * @license MIT
  */
 
-// Default configuration values
-const defaultOptions = {
+// Default configuration values will use centralized constants if available
+const defaultOptions = typeof DEFAULT_OPTIONS !== 'undefined' ? DEFAULT_OPTIONS : {
   domains: [
     "*://*.sharepoint.com/*", 
     "*://*.svc.ms/*"

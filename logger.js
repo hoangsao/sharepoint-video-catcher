@@ -10,11 +10,23 @@
  * @license MIT
  */
 
+// No need to import constants here - they should be loaded before this script
+// in browser contexts, and in service worker contexts we'll check if we need to import
+
+// Ensure constants are available in service worker context
+if (typeof LOG_LEVELS === 'undefined' && typeof importScripts === 'function') {
+  try {
+    importScripts('constants.js');
+  } catch (e) {
+    console.error('Failed to load constants.js:', e);
+  }
+}
+
 /**
  * Log levels in order of verbosity
  * @enum {number}
  */
-const LogLevel = {
+const LogLevel = typeof LOG_LEVELS !== 'undefined' ? LOG_LEVELS : {
   NONE: 0,    // No logging
   ERROR: 1,   // Only errors
   WARN: 2,    // Errors and warnings

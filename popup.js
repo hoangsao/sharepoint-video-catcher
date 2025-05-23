@@ -61,11 +61,14 @@ function showCopySuccess(button) {
     button.classList.add('copy-success');
   }
   
+  // Use UI_CONSTANTS with fallback
+  const feedbackTimeout = typeof UI_CONSTANTS !== 'undefined' ? UI_CONSTANTS.FEEDBACK_TIMEOUT : 1500;
+  
   setTimeout(() => {
     button.textContent = originalText;
     button.disabled = false;
     button.className = originalClass;
-  }, 1500);
+  }, feedbackTimeout);
 }
 
 /**
@@ -81,10 +84,13 @@ function showCopyError(button, errorMsg = 'Error') {
   button.textContent = errorMsg;
   button.style.backgroundColor = '#d13438';
   
+  // Use UI_CONSTANTS with fallback
+  const feedbackTimeout = typeof UI_CONSTANTS !== 'undefined' ? UI_CONSTANTS.FEEDBACK_TIMEOUT : 1500;
+  
   setTimeout(() => {
     button.textContent = originalText;
     button.style.backgroundColor = '';
-  }, 1500);
+  }, feedbackTimeout);
 }
 
 /**
@@ -177,8 +183,7 @@ function displayVideoManifests(manifests) {
         
         // Add download button
         const downloadSubtitleButton = document.createElement('button');
-        downloadSubtitleButton.textContent = 'Download';
-        downloadSubtitleButton.onclick = function() {
+        downloadSubtitleButton.textContent = 'Download';        downloadSubtitleButton.onclick = function() {
           try {
             // Create and click a temporary download link
             const a = document.createElement('a');
@@ -188,7 +193,7 @@ function displayVideoManifests(manifests) {
             a.style.display = 'none';
             document.body.appendChild(a);
             a.click();
-            document.body.removeChild(a);          } catch (error) {
+            document.body.removeChild(a);} catch (error) {
             popupLogger.error('Error downloading subtitle:', error);
             alert('Failed to download subtitle. Please try copying the URL instead.');
           }
@@ -300,13 +305,13 @@ function addDebugInfoLink() {
     debugInfo.style.padding = '8px';
     debugInfo.style.backgroundColor = '#f0f0f0';
     debugInfo.style.borderRadius = '4px';
-    
-    const hostInfo = document.createElement('p');
+      const hostInfo = document.createElement('p');
     hostInfo.textContent = `Current host: ${window.location.host}`;
     debugInfo.appendChild(hostInfo);
     
     const urlInfo = document.createElement('p');
-    urlInfo.textContent = 'Extension is monitoring URLs matching: *://*.sharepoint.com/*';
+    const domains = typeof DEFAULT_OPTIONS !== 'undefined' ? DEFAULT_OPTIONS.domains.join(', ') : '*://*.sharepoint.com/*, *://*.svc.ms/*';
+    urlInfo.textContent = `Extension is monitoring URLs matching: ${domains}`;
     debugInfo.appendChild(urlInfo);
     
     const tipInfo = document.createElement('p');

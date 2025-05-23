@@ -22,8 +22,7 @@
       <img src="icons/icon32.png" alt="Sharepoint Video Catcher Logo" />
       <h1>Sharepoint Video Catcher</h1>
       <button id="clear-all-button" class="clear-all-button">Clear All</button>
-    </div>
-    <div id="no-videos" class="message">
+    </div>    <div id="no-videos" class="message">
       <p>No videos detected yet. Please follow these steps:</p>
       <ol style="text-align: left; padding-left: 20px;">
         <li>Make sure you're on a Sharepoint site</li>
@@ -32,7 +31,11 @@
         <li>Try seeking/scrubbing through the video</li>
         <li>Refresh this popup</li>
       </ol>    </div>
-    <div id="video-list" class="scrollable-list"></div>  </div>  <script src="logger.js"></script>
+    <div id="video-list" class="scrollable-list"></div>  </div>  
+  <!-- Load scripts in the right order -->
+  <script src="constants.js"></script>
+  <script src="import-utils.js"></script>
+  <script src="logger.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

@@ -11,12 +11,14 @@
  * @license MIT
  */
 
-// Import the logger first
-try {
-  importScripts('logger.js');
-} catch (e) {
-  console.error('Failed to load logger.js:', e);
-}
+// In service worker context, we need to load resources directly
+// importScripts is available only in service worker context
+
+// First load constants
+importScripts('constants.js');
+
+// Then load logger which depends on constants
+importScripts('logger.js');
 
 // Create a background-specific logger instance
 const bgLogger = new Logger('Background');
@@ -54,7 +56,7 @@ function startKeepAlive() {
       // This operation keeps the service worker active
       bgLogger.debug('Service worker keepAlive ping');
     });
-  }, 45000); // Increased from 25 seconds to 45 seconds
+  }, TIME_CONSTANTS.KEEPALIVE_INTERVAL);
   
   bgLogger.debug('Service worker keepAlive started');
   
@@ -65,14 +67,13 @@ function startKeepAlive() {
     chrome.storage.local.get(['lastActivity'], (result) => {
       const lastActivity = result.lastActivity || 0;
       const now = Date.now();
-      
-      // If no activity for 90 seconds, stop the keepAlive
-      if (now - lastActivity > 90000) {
+        // If no activity for 90 seconds, stop the keepAlive
+      if (now - lastActivity > TIME_CONSTANTS.AUTOSTOP_TIMEOUT) {
         stopKeepAlive();
         bgLogger.info('Service worker keepAlive auto-stopped due to inactivity');
       }
     });
-  }, 90000); // 90 seconds - reduced from 3 minutes
+  }, TIME_CONSTANTS.AUTOSTOP_TIMEOUT);
 }
 
 /**
@@ -104,9 +105,8 @@ async function ensureListenersActive() {
       chrome.storage.local.get(['lastActivity'], (result) => {
         const lastActivity = result.lastActivity || 0;
         const now = Date.now();
-        
-        // If no activity for 5 minutes, force stop keepAlive regardless of interval
-        if (now - lastActivity > 300000) { // 5 minutes
+          // If no activity for 5 minutes, force stop keepAlive regardless of interval
+        if (now - lastActivity > TIME_CONSTANTS.FORCE_STOP_TIMEOUT) {
           stopKeepAlive();
           bgLogger.info('Service worker keepAlive force-stopped due to extended inactivity');
         }
@@ -226,7 +226,7 @@ async function executeScriptInTab (tabId, func) {
  * @returns {string} - The extracted filename or a default name if extraction fails
  */
 function extractVideoFileName (url) {
-  const defaultVideoFileName = 'video.mp4';
+  const defaultVideoFileName = DEFAULTS.VIDEO_FILENAME;
   try {
     const urlObj = new URL(url);
 
@@ -342,17 +342,7 @@ async function fetchApiData (url, subrequestParams) {
  * @returns {Promise<void>}
  */
 async function initializeListeners () {
-  const options = await chrome.storage.sync.get({
-    domains: ["*://*.sharepoint.com/*", "*://*.svc.ms/*"],
-    removeParams: ["enableCdn"],
-    videoKeywords: ["videomanifest"],
-    transcriptKeywords: ["select=media/transcripts", "select=media%2Ftranscripts"],
-    subrequestParams: ["subRequest=true", "isCustomized=true"],
-    fileExtension: '.mp4',
-    ffmpegTemplate: 'ffmpeg -i "{url}" -codec copy "{filename}"',
-    maxItems: 20,
-    notifyOnDetection: false
-  });
+  const options = await chrome.storage.sync.get(DEFAULT_OPTIONS);
   // Check if listeners are already registered to prevent duplicates
   if (chrome.webRequest.onBeforeRequest.hasListeners()) {
     bgLogger.debug('WebRequest listeners already exist, skipping registration');
@@ -723,7 +713,7 @@ if (chrome.runtime.onInstalled) {
 
 // Set up less frequent health check for listeners
 // This conserves resources while still ensuring reliability
-setInterval(ensureListenersActive, 300000); // Check every 5 minutes to reduce resource usage
+setInterval(ensureListenersActive, TIME_CONSTANTS.HEALTH_CHECK_INTERVAL); // Check every 5 minutes to reduce resource usage
 
 // Initialize immediately when script loads (for cases when service worker restarts)
 (async function() {
